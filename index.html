@@ -9,6 +9,11 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Inter:wght@300;400;500;600&display=swap');
 
+:root {
+    --pad: 60px;        /* page gutter */
+    --hline: 70px;      /* y of the horizontal rule under the header */
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
 
 html, body {
@@ -26,10 +31,27 @@ body {
     color: #ffffff;
     overflow-x: hidden;
     cursor: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
 }
 
 * { cursor: none !important; }
 ::-webkit-scrollbar { display: none; width: 0; }
+
+/* form fields must stay selectable/typable despite the global user-select:none */
+input, select, textarea {
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+/* Touch devices have no pointer to replace: show the real cursor behaviour and
+   drop the two custom rings, which would otherwise sit frozen where the last
+   tap landed. */
+@media (hover: none), (pointer: coarse) {
+    body { cursor: auto; }
+    * { cursor: auto !important; }
+    .cursor-inner, .cursor-outer { display: none !important; }
+}
 
 #webgl {
     position: fixed;
@@ -37,6 +59,22 @@ body {
     width: 100%; height: 100%;
     z-index: 1;
     outline: none;
+}
+
+/* The background shader sweeps bright waves across the top of the frame and
+   they swallow the nav. This scrim guarantees contrast for the header at every
+   scroll position — the problem exists on desktop too, just less visibly. */
+.top-scrim {
+    position: fixed;
+    left: 0; right: 0; top: 0;
+    height: 150px;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(to bottom,
+        rgba(0,0,0,0.88) 0%,
+        rgba(0,0,0,0.70) 40%,
+        rgba(0,0,0,0.30) 75%,
+        rgba(0,0,0,0.0) 100%);
 }
 
 /* Scrim: keeps the editorial copy legible where it crosses the watch */
@@ -77,14 +115,13 @@ body {
 /* ---------- overlay layer ---------- */
 .cinematic-container {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    top: 0; left: 0; right: 0; bottom: 0;
     z-index: 10;
     pointer-events: none;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 0 60px 40px 60px;
+    padding: 0 var(--pad) 40px var(--pad);
     box-sizing: border-box;
 }
 
@@ -97,12 +134,14 @@ body {
 .brand {
     font-size: 14px; font-weight: 600;
     letter-spacing: 6px; text-transform: uppercase;
+    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.9);
 }
 .header-nav { display: flex; align-items: center; gap: 24px; }
 .nav-link {
     color: #ffffff; text-decoration: none;
     font-size: 10px; text-transform: uppercase; letter-spacing: 2px;
     font-weight: 500; transition: color 0.3s;
+    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.95), 0 0 4px rgba(0, 0, 0, 0.8);
 }
 .nav-link:hover { color: rgba(255,255,255,0.6); }
 .nav-dot { width: 3px; height: 3px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; }
@@ -125,44 +164,44 @@ body {
 .slide { position: absolute; bottom: 12%; pointer-events: none; }
 
 #slide-1 { left: 0; width: 100%; }
-#slide-1 .slide-title { margin-left: 60px; }
+#slide-1 .slide-title { margin-left: var(--pad); }
 #slide-1 .desc-row { position: relative; display: flex; width: 100%; }
 #slide-1 .col-1 {
-    margin-left: 60px;
-    width: calc(25vw - 60px);
-    max-width: calc(25vw - 60px);
+    margin-left: var(--pad);
+    width: calc(25vw - var(--pad));
+    max-width: 30ch;
 }
 #slide-1 .col-2 {
     position: absolute;
     left: calc(25vw + 40px);
-    width: calc(25vw - 60px);
-    max-width: calc(25vw - 60px);
+    width: calc(25vw - var(--pad));
+    max-width: 30ch;
 }
 
 #slide-2 { left: 0; width: 100%; }
 #slide-2 .slide-title { margin-left: calc(25vw + 40px); }
 #slide-2 .slide-desc {
     margin-left: calc(50vw + 20px);
-    width: calc(25vw - 60px);
-    max-width: calc(25vw - 60px);
+    width: calc(25vw - var(--pad));
+    max-width: 30ch;
 }
 
 #slide-3 {
     left: calc(50vw + 20px);
-    width: calc(25vw - 60px);
-    max-width: calc(25vw - 60px);
+    width: calc(25vw - var(--pad));
+    max-width: 30ch;
 }
 
 #slide-4 { left: calc(25% + 40px); max-width: 40vw; }
-#slide-4 .slide-desc { max-width: 560px; }
+#slide-4 .slide-desc { max-width: 46ch; }
 
 .slide-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 130px;
+    font-size: clamp(40px, 6.8vw, 130px);
     line-height: 0.95;
     font-weight: 300;
     letter-spacing: 0px;
-    margin-bottom: 24px;
+    margin-bottom: clamp(14px, 1.6vw, 24px);
     color: #f5f5f5;
     text-shadow: 0 4px 40px rgba(0, 0, 0, 0.85);
     /* every letter is its own inline-block, so a word will happily break
@@ -170,7 +209,8 @@ body {
     white-space: nowrap;
 }
 .slide-desc {
-    font-size: 16px; line-height: 1.7; font-weight: 300;
+    font-size: clamp(13px, 1.1vw, 16px);
+    line-height: 1.65; font-weight: 300;
     color: #b8b8b8; letter-spacing: 0.2px;
     text-shadow: 0 2px 24px rgba(0, 0, 0, 0.9);
     opacity: 0;
@@ -228,14 +268,15 @@ body {
 .story-dash-fill { width: 100%; height: 0%; background: #ffffff; border-radius: 2px; }
 
 .grid-horizontal-line {
-    position: fixed; top: 70px; left: 0; right: 0;
+    position: fixed; top: var(--hline); left: 0; right: 0;
     width: 100%; height: 1px;
     background: rgba(255, 255, 255, 0.12);
     z-index: 5; pointer-events: none;
 }
+/* top/bottom rather than height:100vh — on mobile the URL bar changes the
+   viewport height and 100vh overshoots the visible area */
 .grid-lines {
-    position: fixed; top: 0; left: 40px; right: 40px;
-    width: calc(100% - 80px); height: 100vh;
+    position: fixed; top: 0; bottom: 0; left: 40px; right: 40px;
     display: flex; justify-content: space-between;
     z-index: 5; pointer-events: none;
 }
@@ -243,7 +284,7 @@ body {
     position: relative; width: 1px; height: 100%;
     background: rgba(255, 255, 255, 0.12);
 }
-.grid-line:nth-child(3) { margin-top: 70px; height: calc(100vh - 70px); }
+.grid-line:nth-child(3) { margin-top: var(--hline); height: calc(100% - var(--hline)); }
 .grid-dot {
     position: absolute; left: 50%;
     transform: translate(-50%, -50%);
@@ -444,6 +485,143 @@ html.no-scroll, body.no-scroll { overflow: hidden; }
     .model-grid { grid-template-columns: repeat(2, 1fr); }
     .field-row { flex-direction: column; }
 }
+
+/* ================= TV / very wide ================= */
+/* Stop the copy from stretching into unreadable 80-character lines. */
+@media (min-width: 2000px) {
+    :root { --pad: 88px; }
+    .slide-title { font-size: 136px; }
+    .slide-desc { font-size: 18px; }
+    .model-grid { max-width: 1900px; }
+    .order-form { max-width: 1200px; }
+}
+
+/* ================= tablet ================= */
+@media (max-width: 1000px) {
+    :root { --pad: 32px; }
+
+    #slide-2 .slide-title { margin-left: calc(33vw + 20px); }
+    #slide-2 .slide-desc  { margin-left: calc(33vw + 20px); width: auto; max-width: 40ch; }
+    #slide-3 { left: calc(33vw + 20px); width: auto; right: var(--pad); max-width: 40ch; }
+    #slide-4 { left: calc(33vw + 20px); max-width: 50vw; }
+}
+
+/* ============ phone + portrait tablet ============ */
+/* The 25vw column grid cannot survive here: the columns collapse and the text
+   lands on top of itself. Everything goes single-column, full width.
+   820px rather than 760px so a portrait tablet (768 wide) is covered too — at
+   that width the two columns are 160px each, which is miserable to read. */
+@media (max-width: 820px) {
+    :root { --pad: 22px; --hline: 104px; }
+
+    .cinematic-container { padding: 0 var(--pad) 24px var(--pad); }
+
+    /* header wraps to two rows: brand + Buy Now, then the nav underneath */
+    .main-header { flex-wrap: wrap; padding: 16px 0 10px 0; row-gap: 10px; }
+    .brand { font-size: 12px; letter-spacing: 4px; }
+    .header-nav {
+        order: 3;
+        width: 100%;
+        justify-content: space-between;
+        gap: 0;
+    }
+    .nav-link { font-size: 9px; letter-spacing: 1.2px; padding: 6px 2px; }
+    .nav-dot { display: none; }
+    .contact-btn { padding: 12px 20px; font-size: 9px; }
+
+    /* one column of grid lines, right-hand side, carrying the progress bar */
+    .grid-lines { left: 0; right: 10px; justify-content: flex-end; }
+    .grid-line:not(.story-progress-container) { display: none; }
+    .story-dash { height: 26px; }
+    .story-dashes { gap: 8px; }
+
+    /* slides: full width, stacked, nothing absolutely offset by vw */
+    .slide { bottom: 8%; left: var(--pad) !important; right: var(--pad);
+             width: auto !important; max-width: none !important; }
+    #slide-1 .slide-title,
+    #slide-2 .slide-title { margin-left: 0; }
+    #slide-1 .desc-row { flex-direction: column; gap: 14px; }
+    #slide-1 .col-1,
+    #slide-1 .col-2 {
+        position: static;
+        left: auto;
+        margin-left: 0;
+        width: auto;
+        max-width: none;
+    }
+    #slide-1 .col-2 { display: none; }   /* two columns of copy is too tall here */
+    #slide-2 .slide-desc { margin-left: 0; width: auto; max-width: none; }
+    #slide-3, #slide-4 { max-width: none; }
+    .slide-desc { font-size: 14px; line-height: 1.6; }
+
+    /* the technical drawing tucks into the top-left corner: the watch is now
+       centred, so the corners are the only place it will not cross the case */
+    #slide-2-img {
+        top: calc(var(--hline) + 12px);
+        left: var(--pad);
+        right: auto;
+        width: min(30vw, 118px);
+    }
+
+    .disclaimer { left: var(--pad); right: var(--pad); bottom: 8px; font-size: 8px; letter-spacing: 1px; }
+
+    /* shop: two compact columns, so all six references are on one screen and
+       you only scroll for the order form */
+    .shop-overlay { padding: 22px 16px 44px 16px; }
+    .shop-head { padding-bottom: 10px; margin-bottom: 14px; }
+    .shop-head h3 { font-size: 32px; }
+    .shop-head .shop-sub { font-size: 9px; letter-spacing: 2px; margin-bottom: 4px; }
+    .shop-close { width: 42px; height: 42px; }
+
+    .model-grid { grid-template-columns: repeat(2, 1fr); margin-bottom: 30px; }
+    .model-card { padding: 12px 11px 13px 11px; gap: 6px; }
+    .model-figure { width: 56px; height: 56px; margin-bottom: 0; }
+    .model-ref { font-size: 8px; letter-spacing: 1.6px; }
+    .model-name { font-size: 21px; line-height: 1; }
+    .model-spec { font-size: 11px; line-height: 1.45; }
+    .model-foot { flex-direction: column; align-items: stretch; gap: 8px; margin-top: 4px; }
+    .model-price { font-size: 15px; }
+    .model-pick { padding: 11px 10px; width: 100%; font-size: 8px; letter-spacing: 1.2px; }
+
+    .order-form h4 { font-size: 30px; }
+    .field input, .field select { font-size: 16px; }   /* <16px makes iOS zoom on focus */
+    .order-submit { width: 100%; padding: 16px 20px; }
+    .shop-cta { padding: 14px 26px; }
+}
+
+/* Phone held sideways: wide enough to escape the phone breakpoint, but only
+   ~390px tall. The watch sits centred, so any copy in the middle columns runs
+   straight across the case. Push all text into the left third and drop the
+   second column. */
+@media (max-height: 540px) and (orientation: landscape) {
+    .slide-title { font-size: clamp(28px, 4.6vw, 54px); margin-bottom: 6px; }
+    .slide-desc  { font-size: 12px; line-height: 1.45; }
+
+    .slide {
+        bottom: 30px;
+        left: var(--pad) !important;
+        width: auto !important;
+        max-width: 34% !important;
+    }
+    #slide-1 .slide-title,
+    #slide-2 .slide-title { margin-left: 0; }
+    #slide-1 .desc-row { flex-direction: column; }
+    #slide-1 .col-1 { margin-left: 0; width: auto; max-width: none; }
+    #slide-1 .col-2 { display: none; }
+    #slide-2 .slide-desc { margin-left: 0; width: auto; max-width: none; }
+
+    /* the drawing would sit on top of the case; tuck it into the right edge */
+    #slide-2-img {
+        top: auto;
+        bottom: 30px;
+        left: auto;
+        right: var(--pad);
+        width: min(20vw, 110px);
+    }
+
+    .disclaimer { bottom: 6px; font-size: 7px; }
+    .top-scrim { height: 110px; }
+}
 </style>
 </head>
 <body>
@@ -451,6 +629,7 @@ html.no-scroll, body.no-scroll { overflow: hidden; }
 <div class="cursor-inner"></div>
 <div class="cursor-outer"></div>
 
+<div class="top-scrim"></div>
 <div class="bottom-scrim"></div>
 
 <div class="cinematic-container">
@@ -626,11 +805,16 @@ const shaderUniforms = {
     uScroll:     { value: 0 }
 };
 
+// A phone has no pointer to replace, a weaker GPU and a battery. Shadow maps
+// and a 2x pixel ratio are the two things that cost the most here.
+const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
 let dustParticles;
-const dustCount = 450;
+const dustCount = isTouch ? 220 : 450;
 const dustData = [];
 
 const sizes = { width: window.innerWidth, height: window.innerHeight };
+const maxPixelRatio = isTouch ? 1.5 : 2;
 
 /* ------------------------------------------------------------------ */
 /*  Materials                                                          */
@@ -909,69 +1093,73 @@ function buildCrownAndLugs() {
     buildBracelet();
 }
 
-/* --- steel bracelet: links laid along a curve that wraps away from the
-       viewer, the way a bracelet falls around a wrist --- */
+/* --- steel bracelet: a closed loop, the shape it takes on a wrist.
+       An open bracelet always ends somewhere, and because it curves away from
+       the camera that end falls back INSIDE the frame at most angles — it reads
+       as a snapped-off strap. A loop has no ends, so there is nothing to cut.
+       Instanced: the whole bracelet is two draw calls. --- */
 function buildBracelet() {
-    // long enough that both ends leave the frame at every camera angle —
-    // a bracelet that stops in mid-air reads as a broken object
-    const LINKS = 19;
+    const R  = 2.60;    // wrist radius
+    const CZ = -2.40;   // wrist centre, behind the case
 
-    const topCurve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(0, 1.02,  0.00),
-        new THREE.Vector3(0, 1.70, -0.10),
-        new THREE.Vector3(0, 2.40, -0.38),
-        new THREE.Vector3(0, 3.00, -0.90),
-        new THREE.Vector3(0, 3.40, -1.60),
-        new THREE.Vector3(0, 3.55, -2.35)
-    ]);
-    const botCurve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(0, -1.02,  0.00),
-        new THREE.Vector3(0, -1.70, -0.10),
-        new THREE.Vector3(0, -2.40, -0.38),
-        new THREE.Vector3(0, -3.00, -0.90),
-        new THREE.Vector3(0, -3.40, -1.60),
-        new THREE.Vector3(0, -3.55, -2.35)
-    ]);
+    // the loop leaves the case at the lugs and comes back to them the long way
+    const aLug  = Math.atan2(1.02, -CZ);
+    const start = aLug;
+    const arc   = Math.PI * 2 - aLug * 2;
+
+    const LINK_H = 0.245;
+    const LINKS  = Math.round((R * arc) / LINK_H);
 
     // one link = three sub-bars, centre polished, flanks brushed (Oyster-ish)
-    const centreGeo = new THREE.BoxGeometry(0.26, 0.235, 0.115);
-    const flankGeo  = new THREE.BoxGeometry(0.20, 0.235, 0.100);
+    const centreGeo = new THREE.BoxGeometry(0.26, LINK_H, 0.115);
+    const flankGeo  = new THREE.BoxGeometry(0.20, LINK_H, 0.100);
 
-    [topCurve, botCurve].forEach(curve => {
-        for (let i = 0; i < LINKS; i++) {
-            const t = (i + 0.5) / LINKS;
-            const pos = curve.getPointAt(t);
-            const tan = curve.getTangentAt(t).normalize();
+    const centres = new THREE.InstancedMesh(centreGeo, MAT.polish, LINKS);
+    const flanks  = new THREE.InstancedMesh(flankGeo, MAT.brushed, LINKS * 2);
+    centres.castShadow = true;
+    flanks.castShadow = true;
 
-            // taper: the bracelet narrows as it leaves the case
-            const k = 1.0 - t * 0.22;
+    const pos     = new THREE.Vector3();
+    const tan     = new THREE.Vector3();
+    const quat    = new THREE.Quaternion();
+    const scale   = new THREE.Vector3();
+    const basis   = new THREE.Matrix4();
+    const linkM   = new THREE.Matrix4();
+    const offsetM = new THREE.Matrix4();
+    const flankM  = new THREE.Matrix4();
+    const xAxis   = new THREE.Vector3(1, 0, 0);
+    const zAxis   = new THREE.Vector3();
+    const xFix    = new THREE.Vector3();
 
-            const link = new THREE.Group();
+    for (let i = 0; i < LINKS; i++) {
+        const th = start + ((i + 0.5) / LINKS) * arc;
 
-            const centre = new THREE.Mesh(centreGeo, MAT.polish);
-            link.add(centre);
+        pos.set(0, R * Math.sin(th), CZ + R * Math.cos(th));
+        tan.set(0, Math.cos(th), -Math.sin(th)).normalize();
 
-            [-0.235, 0.235].forEach(dx => {
-                const flank = new THREE.Mesh(flankGeo, MAT.brushed);
-                flank.position.x = dx;
-                link.add(flank);
-            });
+        // taper: narrowest at the clasp, furthest from the case
+        const away = Math.min(th - start, start + arc - th) / (arc / 2);
+        const k = 1.0 - away * 0.16;
+        scale.set(k, 1, k);
 
-            link.scale.set(k, 1, k);
-            link.position.copy(pos);
+        // align the link's local +Y with the loop tangent
+        zAxis.crossVectors(xAxis, tan).normalize();
+        xFix.crossVectors(tan, zAxis).normalize();
+        basis.makeBasis(xFix, tan, zAxis);
+        quat.setFromRotationMatrix(basis);
 
-            // align the link's local +Y with the curve tangent
-            const xAxis = new THREE.Vector3(1, 0, 0);
-            const zAxis = new THREE.Vector3().crossVectors(xAxis, tan).normalize();
-            const xFix  = new THREE.Vector3().crossVectors(tan, zAxis).normalize();
-            link.quaternion.setFromRotationMatrix(
-                new THREE.Matrix4().makeBasis(xFix, tan, zAxis)
-            );
+        linkM.compose(pos, quat, scale);
+        centres.setMatrixAt(i, linkM);
 
-            link.children.forEach(c => { c.castShadow = true; });
-            watchPivot.add(link);
-        }
-    });
+        [-0.235, 0.235].forEach((dx, j) => {
+            offsetM.makeTranslation(dx, 0, 0);
+            flankM.multiplyMatrices(linkM, offsetM);
+            flanks.setMatrixAt(i * 2 + j, flankM);
+        });
+    }
+
+    watchPivot.add(centres);
+    watchPivot.add(flanks);
 }
 
 /* --- movement, seen through the sapphire caseback --- */
@@ -1294,8 +1482,8 @@ function init() {
         powerPreference: 'high-performance'
     });
     renderer.setSize(sizes.width, sizes.height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
+    renderer.shadowMap.enabled = !isTouch;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.25;
@@ -1310,7 +1498,7 @@ function init() {
     keyLight.position.set(4, 6, 3);
     keyLight.angle = Math.PI / 4;
     keyLight.penumbra = 0.9;
-    keyLight.castShadow = true;
+    keyLight.castShadow = !isTouch;
     keyLight.shadow.mapSize.width = 2048;
     keyLight.shadow.mapSize.height = 2048;
     keyLight.shadow.camera.near = 1.0;
@@ -1360,10 +1548,12 @@ function onWindowResize() {
     camera.aspect = sizes.width / sizes.height;
     camera.updateProjectionMatrix();
     renderer.setSize(sizes.width, sizes.height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
     if (shaderUniforms) shaderUniforms.uResolution.value.set(sizes.width, sizes.height);
 }
 window.addEventListener('resize', onWindowResize);
+// phones fire orientationchange before the new size is readable
+window.addEventListener('orientationchange', () => setTimeout(onWindowResize, 250));
 
 function splitTitlesIntoChars() {
     document.querySelectorAll('.slide-title').forEach(title => {
@@ -1513,10 +1703,19 @@ function animate() {
     // --- camera: pushes IN as the watch turns, so the bracelet runs off the
     //     top and bottom of frame instead of ending in mid-air ---
     const turn = Math.sin(currentScroll * Math.PI);   // 0 at the dial, 1 at the caseback
-    const camZ = 3.25 - turn * 1.05;
-    const camY = 0.26 + turn * 0.10;
+    const portrait = sizes.height > sizes.width;
+
+    // On a phone the frame is tall and narrow: pull back so the watch is not
+    // enormous, and aim at the middle of the case so the dial sits dead centre
+    // of the screen. The copy then crosses the dark bracelet, not the dial,
+    // and .bottom-scrim keeps it legible.
+    const baseZ  = portrait ? 3.95 : 3.25;
+    const lookY  = portrait ? 0.24 : 0.22;      // 0.24 == watchPivot.position.y
+    const camZ = baseZ - turn * (portrait ? 1.15 : 1.05);
+    const camY = (portrait ? 0.24 : 0.26) + turn * 0.10;
+
     camera.position.lerp(new THREE.Vector3(0, camY, camZ), 0.03);
-    camera.lookAt(0, 0.22, 0);
+    camera.lookAt(0, lookY, 0);
 
     if (shaderUniforms) {
         shaderUniforms.uTime.value = time;
