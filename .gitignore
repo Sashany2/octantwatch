@@ -1,11 +1,7 @@
 .playwright-mcp/
-screenshots/v2-*.png
-screenshots/v3-*.png
-screenshots/v4-*.png
-screenshots/v5-*.png
-screenshots/v6-*.png
-screenshots/v7-*.png
-screenshots/v8-*.png
-screenshots/v9-*.png
-screenshots/v10-*.png
-screenshots/scroll-*.png
+
+# Working screenshots from development — intermediate and rejected iterations.
+# Only the two the README shows are tracked.
+screenshots/*
+!screenshots/v11-release-front.png
+!screenshots/live-phone-final.png

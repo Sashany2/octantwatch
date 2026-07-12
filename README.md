@@ -2,7 +2,7 @@
 
 A scroll-driven WebGL landing page for **OCTANT**, a fictional watch brand.
 
-**Live:** https://sashany2.github.io/octantwatch/
+**Live:** https://octantwatch.xyz
 
 ![The watch, dial forward](screenshots/v11-release-front.png)
 
@@ -33,6 +33,19 @@ Everything is procedural Three.js geometry:
 
 The background is a three-layer sine-wave shader whose palette migrates by luminance — graphite at
 the top of the page, polished steel at the bottom. The page is monochrome throughout.
+
+## On a phone
+
+<img src="screenshots/live-phone-final.png" alt="The site on a phone" width="300">
+
+The layout collapses to a single column below 820px, which also catches a portrait tablet. On a
+portrait screen the camera aims at the middle of the case so the watch sits dead centre and the copy
+runs beneath it. Touch devices lose the custom cursor, the shadow maps and half the dust particles —
+they are the expensive part, and none of them survive contact with a phone GPU.
+
+The bracelet is a closed loop rather than two open straps. An open bracelet has to end somewhere, and
+because it curves away from the camera that end falls back inside the frame at most angles, reading
+as a snapped strap. A loop has no ends.
 
 ## Running it
 
