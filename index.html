@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OCTANT — Time, Measured</title>
 <meta name="description" content="OCTANT — a fictional watch brand. A scroll-driven WebGL design demo: a procedurally built steel wristwatch turning in the dark.">
+
+<!-- Without these, a link to this page pasted into Telegram, Slack or iMessage
+     unfurls as a bare URL — which is how most people will meet the site. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="OCTANT — Time, Measured">
+<meta property="og:description" content="A steel wristwatch, built in code and turned by scrolling. A WebGL design demo.">
+<meta property="og:image" content="https://octantwatch.xyz/screenshots/v11-release-front.png">
+<meta property="og:url" content="https://octantwatch.xyz/">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%23fff' stroke-width='2'/%3E%3Cpath d='M16 16V9M16 16l5 3' stroke='%23fff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Inter:wght@300;400;500;600&display=swap');
@@ -622,6 +631,96 @@ html.no-scroll, body.no-scroll { overflow: hidden; }
     .disclaimer { bottom: 6px; font-size: 7px; }
     .top-scrim { height: 110px; }
 }
+
+/* ================= reduced motion =================
+   The counterpart to the `reducedMotion` flag in the script: that one stops the
+   3D from moving by itself, this one stops the copy from flying in. The letters
+   still appear — they simply stop travelling and blurring to get there. */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+    }
+    .slide-title .char { filter: none !important; transform: none !important; }
+    .slide-desc, .shop-cta { transform: none !important; }
+}
+
+/* ================= no WebGL =================
+   The renderer failed to start: no GPU, a stale driver, a locked-down office
+   machine, an anti-fingerprinting extension. Everything that made this page
+   move is gone, so the page stops pretending to be cinema and becomes what it
+   always was underneath — an editorial column with a watch at the top. Last in
+   the sheet so it outranks the media queries above, which shout !important. */
+html.no-webgl, html.no-webgl body { cursor: auto; overflow: visible; }
+html.no-webgl * { cursor: auto !important; }
+html.no-webgl body { min-height: 0; }
+
+html.no-webgl #webgl,
+html.no-webgl .top-scrim,
+html.no-webgl .bottom-scrim,
+html.no-webgl .cursor-inner,
+html.no-webgl .cursor-outer,
+html.no-webgl .grid-overlay,
+html.no-webgl .scroll-hint { display: none !important; }
+
+html.no-webgl .cinematic-container {
+    position: static;
+    display: block;
+    padding-bottom: 120px;
+    pointer-events: auto;
+}
+html.no-webgl .main-header { position: sticky; top: 0; background: #000; }
+
+/* the fallback watch: the same dial the shop draws, blown up. No image file,
+   no request, nothing left to fail. */
+html.no-webgl .static-hero { display: block; }
+.static-hero { display: none; margin: 40px auto 72px; width: min(340px, 70vw); }
+.static-hero svg { width: 100%; height: auto; }
+.static-hero .static-note {
+    margin-top: 28px; text-align: center;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+}
+
+/* every slide becomes a section, in order, fully visible */
+html.no-webgl .slide {
+    position: static !important;
+    width: auto !important;
+    max-width: 680px !important;
+    margin: 0 auto 88px;
+    left: auto !important; right: auto !important; bottom: auto !important;
+    pointer-events: auto;
+}
+html.no-webgl .slide-title .char,
+html.no-webgl .slide-desc,
+html.no-webgl .shop-cta {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+}
+html.no-webgl #slide-1 .slide-title,
+html.no-webgl #slide-2 .slide-title { margin-left: 0; }
+html.no-webgl #slide-1 .desc-row { flex-direction: column; gap: 20px; }
+
+/* col-2 is absolutely positioned in the cinematic layout — left unreset it lands
+   straight on top of col-1 and the two paragraphs print over each other. */
+html.no-webgl #slide-1 .col-1,
+html.no-webgl #slide-1 .col-2,
+html.no-webgl #slide-2 .slide-desc {
+    position: static !important;
+    left: auto !important;
+    margin-left: 0; width: auto; max-width: none; display: block;
+}
+html.no-webgl .slide-image-mask {
+    position: static !important;
+    clip-path: none !important;
+    opacity: 1 !important;
+    width: min(300px, 60vw) !important;
+    margin: 0 auto 88px;
+}
+html.no-webgl .disclaimer { position: static; text-align: center; padding: 40px 0; }
 </style>
 </head>
 <body>
@@ -648,6 +747,37 @@ html.no-scroll, body.no-scroll { overflow: hidden; }
         <div class="header-actions">
             <a href="#" class="contact-btn" id="buy-now-btn">Buy Now <span class="btn-circle"></span></a>
         </div>
+    </div>
+
+    <!-- Stands in for the 3D watch when there is no WebGL to draw it with.
+         Hidden until html.no-webgl says otherwise. Inline, so it needs neither
+         a network request nor the script that failed. -->
+    <div class="static-hero">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OCTANT Meridian, dial forward">
+            <circle cx="60" cy="60" r="57" fill="none" stroke="#fff" stroke-width="2.5" opacity="0.85"/>
+            <circle cx="60" cy="60" r="52" fill="#0a0a0a" stroke="#fff" stroke-width="0.8" opacity="0.9"/>
+            <rect x="57" y="3" width="6" height="8" fill="#fff" opacity="0.7"/>
+            <rect x="57" y="109" width="6" height="8" fill="#fff" opacity="0.7"/>
+            <rect x="115" y="56" width="5" height="8" rx="1" fill="#fff" opacity="0.7"/>
+            <g stroke="#fff" opacity="0.8">
+                <line x1="60" y1="16" x2="60" y2="10" stroke-width="2.4"/>
+                <line x1="82" y1="21.9" x2="85" y2="16.7" stroke-width="1.2"/>
+                <line x1="98.1" y1="38" x2="103.3" y2="35" stroke-width="1.2"/>
+                <line x1="104" y1="60" x2="110" y2="60" stroke-width="2.4"/>
+                <line x1="98.1" y1="82" x2="103.3" y2="85" stroke-width="1.2"/>
+                <line x1="82" y1="98.1" x2="85" y2="103.3" stroke-width="1.2"/>
+                <line x1="60" y1="104" x2="60" y2="110" stroke-width="2.4"/>
+                <line x1="38" y1="98.1" x2="35" y2="103.3" stroke-width="1.2"/>
+                <line x1="21.9" y1="82" x2="16.7" y2="85" stroke-width="1.2"/>
+                <line x1="16" y1="60" x2="10" y2="60" stroke-width="2.4"/>
+                <line x1="21.9" y1="38" x2="16.7" y2="35" stroke-width="1.2"/>
+                <line x1="38" y1="21.9" x2="35" y2="16.7" stroke-width="1.2"/>
+            </g>
+            <line x1="60" y1="60" x2="60" y2="30" stroke="#fff" stroke-width="2.6" opacity="0.95"/>
+            <line x1="60" y1="60" x2="82" y2="74" stroke="#fff" stroke-width="1.8" opacity="0.95"/>
+            <circle cx="60" cy="60" r="3" fill="#fff"/>
+        </svg>
+        <p class="static-note">Calibre O-1 · Steel · 41 mm</p>
     </div>
 
     <div class="slide" id="slide-1">
@@ -775,13 +905,39 @@ html.no-scroll, body.no-scroll { overflow: hidden; }
 <script type="importmap">
 {
   "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+    "three": "./vendor/three.module.min.js"
   }
 }
 </script>
 
+<!-- Watchdog. A module that fails to load — a missing file, a syntax error, a
+     browser with no import-map support — takes its own error handling down with
+     it: nothing inside it ever runs, so nothing inside it can catch anything.
+     This is a plain script, so it survives that, and it is the only thing that
+     can. If the module has not reported for duty in three seconds, assume it
+     never will and show the static page. -->
+<script>
+window.__octantBooted = false;
+window.__octantFallback = function (reason) {
+    if (window.__octantBooted) return;
+    window.__octantBooted = true;
+    document.documentElement.classList.add('no-webgl');
+    console.warn('OCTANT: falling back to the static page —', reason);
+};
+window.addEventListener('error', function (e) {
+    if (e.target && e.target.tagName === 'SCRIPT') window.__octantFallback('a script failed to load');
+}, true);
+setTimeout(function () { window.__octantFallback('the 3D module did not start within 3s'); }, 3000);
+</script>
+
 <script type="module">
 import * as THREE from 'three';
+
+/* Where an order goes. Paste the URL that `wrangler deploy` printed — it looks
+   like https://octant-order.<your-subdomain>.workers.dev — and the form starts
+   sending for real. Left empty, the form says so out loud rather than thanking
+   people for orders it is quietly dropping. See worker/README.md. */
+const ORDER_ENDPOINT = 'https://octant-order.orders-relay-x.workers.dev';
 
 const canvas = document.querySelector('#webgl');
 
@@ -808,6 +964,13 @@ const shaderUniforms = {
 // A phone has no pointer to replace, a weaker GPU and a battery. Shadow maps
 // and a 2x pixel ratio are the two things that cost the most here.
 const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
+/* Someone with vestibular disorder has told their operating system to stop
+   animating things. Motion they drive themselves — the watch turning as they
+   scroll — is fine and stays. Motion that happens at them whether they act or
+   not — the balance wheel, the rotor, the drifting dust, the waves in the
+   background — is what makes people ill, and it stops. */
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let dustParticles;
 const dustCount = isTouch ? 220 : 450;
@@ -1623,6 +1786,10 @@ function setupNavigation() {
     const targetScrolls = [0.0, 0.34, 0.62, 0.94];
     document.querySelectorAll('.nav-link').forEach((link, index) => {
         link.addEventListener('click', (e) => {
+            /* In the static fallback the slides are real sections in the document
+               flow, so the href already points at them. Scrolling to a fraction of
+               a page height that no longer exists would land nowhere. */
+            if (document.documentElement.classList.contains('no-webgl')) return;
             e.preventDefault();
             const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
             window.scrollTo({ top: maxScroll * targetScrolls[index], behavior: 'smooth' });
@@ -1666,15 +1833,19 @@ function animate() {
         const hoursTotal = 10 + 10 / 60 + currentScroll * 12.0;
         if (minuteHand) minuteHand.rotation.z = -(hoursTotal % 1) * Math.PI * 2;
         if (hourHand)   hourHand.rotation.z   = -((hoursTotal % 12) / 12) * Math.PI * 2;
-        if (secondHand) secondHand.rotation.z = -((time % 60) / 60) * Math.PI * 2;
+        // everything below runs off the clock rather than off the scroll, so it
+        // is exactly the motion that prefers-reduced-motion asks us to stop
+        const t = reducedMotion ? 0 : time;
 
-        if (balanceWheel) balanceWheel.rotation.z = Math.sin(time * 10.0) * 0.9;
-        if (rotor) rotor.rotation.z = Math.sin(time * 0.35) * 1.4;
-        gears.forEach(g => { g.rotation.z = time * g.userData.speed; });
+        if (secondHand) secondHand.rotation.z = -((t % 60) / 60) * Math.PI * 2;
+
+        if (balanceWheel) balanceWheel.rotation.z = Math.sin(t * 10.0) * 0.9;
+        if (rotor) rotor.rotation.z = Math.sin(t * 0.35) * 1.4;
+        gears.forEach(g => { g.rotation.z = t * g.userData.speed; });
     }
 
     // --- dust ---
-    if (dustParticles) {
+    if (dustParticles && !reducedMotion) {
         const positions = dustParticles.geometry.attributes.position.array;
         const scrollVelocity = Math.abs(targetScroll - currentScroll);
         const speedMultiplier = 1.0 + scrollVelocity * 9.0;
@@ -1718,7 +1889,9 @@ function animate() {
     camera.lookAt(0, lookY, 0);
 
     if (shaderUniforms) {
-        shaderUniforms.uTime.value = time;
+        // frozen waves under reduced motion: the palette still migrates with
+        // scroll, it just stops rolling on its own
+        shaderUniforms.uTime.value = reducedMotion ? 0 : time;
         shaderUniforms.uMouse.value.set(mouseX, -mouseY);
         shaderUniforms.uScroll.value = currentScroll;
     }
@@ -1754,7 +1927,21 @@ function dialSVG(kind) {
     const extra = {
         sector:   '<circle cx="60" cy="60" r="30" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.35"/><circle cx="60" cy="60" r="38" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.35"/>',
         dot:      '<circle cx="60" cy="60" r="40" fill="none" stroke="#fff" stroke-width="0.8" stroke-dasharray="1 6" opacity="0.5"/>',
-        reserve:  '<path d="M40 78 A 24 24 0 0 1 80 78" fill="none" stroke="#fff" stroke-width="1" opacity="0.5"/><line x1="60" y1="78" x2="72" y2="70" stroke="#fff" stroke-width="1.4" opacity="0.7"/>',
+        /* Power reserve, as a proper fan register at six o'clock: an arc, five
+           graduations and its own needle sitting about three-quarters wound.
+           It has to stay small and low — the old version was a wide shallow
+           sweep that ran straight under the minute hand and read as a stray
+           line rather than a sub-dial. */
+        reserve:  '<path d="M48.7 81.9 A 12 12 0 0 1 71.3 81.9" fill="none" stroke="#fff" stroke-width="0.9" opacity="0.55"/>' +
+                  '<g stroke="#fff" stroke-width="0.9" opacity="0.5">' +
+                  '<line x1="48.7" y1="81.9" x2="45.9" y2="80.9"/>' +
+                  '<line x1="53.1" y1="76.2" x2="51.4" y2="73.7"/>' +
+                  '<line x1="60" y1="74" x2="60" y2="71"/>' +
+                  '<line x1="66.9" y1="76.2" x2="68.6" y2="73.7"/>' +
+                  '<line x1="71.3" y1="81.9" x2="74.1" y2="80.9"/>' +
+                  '</g>' +
+                  '<line x1="60" y1="86" x2="67" y2="78.2" stroke="#fff" stroke-width="1.3" opacity="0.8"/>' +
+                  '<circle cx="60" cy="86" r="1.3" fill="#fff" opacity="0.8"/>',
         skeleton: '<circle cx="46" cy="52" r="11" fill="none" stroke="#fff" stroke-width="0.9" opacity="0.5"/><circle cx="72" cy="66" r="14" fill="none" stroke="#fff" stroke-width="0.9" opacity="0.5"/><circle cx="66" cy="42" r="8" fill="none" stroke="#fff" stroke-width="0.9" opacity="0.4"/>',
         baton:    ''
     }[kind] || '';
@@ -1843,24 +2030,70 @@ function setupShop() {
     closeBtn.addEventListener('click', close);
     window.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 
-    form.addEventListener('submit', e => {
+    form.addEventListener('submit', async e => {
         e.preventDefault();
         const m = MODELS.find(x => x.ref === select.value);
         const name = document.getElementById('of-name').value.trim();
-        result.innerHTML =
-            `Thank you, ${name || 'friend'}. Your order for the <strong>${m.name}</strong> ` +
-            `(${m.ref}, ${money(m.price)}) has been recorded.` +
-            `<span class="warn">Prototype — nothing was actually sent. This form has no backend.</span>`;
-        form.reset();
-        select.value = m.ref;
+        const email = document.getElementById('of-email').value.trim();
+        const engraving = document.getElementById('of-engraving').value.trim();
+
+        /* No endpoint means no order. Say that, and say it instead of "thank
+           you" — never after it. A form that thanks you for something it threw
+           away is worse than a form that admits it is a prototype. */
+        if (!ORDER_ENDPOINT) {
+            result.innerHTML =
+                `<span class="warn">This form has nowhere to send an order yet — the intake worker is not ` +
+                `deployed. Nothing was sent, and nothing was recorded. See worker/README.md.</span>`;
+            return;
+        }
+
+        const submitBtn = form.querySelector('.order-submit');
+        submitBtn.disabled = true;
+        result.textContent = 'Sending…';
+
+        try {
+            const res = await fetch(ORDER_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, engraving, ref: m.ref }),
+            });
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok || !data.ok) throw new Error(data.error || `server said ${res.status}`);
+
+            result.innerHTML =
+                `Thank you, ${name || 'friend'}. Your order for the <strong>${m.name}</strong> ` +
+                `(${m.ref}, ${money(m.price)}) has been recorded.`;
+            form.reset();
+            select.value = m.ref;
+        } catch (err) {
+            // The visitor is told the truth: it did not go through, try again.
+            result.innerHTML =
+                `<span class="warn">Your order did not go through — ${err.message}. ` +
+                `Nothing was recorded. Please try again.</span>`;
+        } finally {
+            submitBtn.disabled = false;
+        }
     });
 }
 
 window.addEventListener('DOMContentLoaded', () => {
     splitTitlesIntoChars();
-    init();
-    onWindowResize();
-    animate();
+
+    /* The 3D is the decoration, not the page. If the renderer cannot start —
+       no GPU, a dead driver, a corporate policy, a privacy extension — the copy
+       must still be readable and the shop must still open. Everything below the
+       catch runs either way, which is the whole point: the words on this page do
+       not depend on a graphics card. */
+    try {
+        init();
+        onWindowResize();
+        animate();
+        window.__octantBooted = true;   // stand the watchdog down: the 3D is alive
+    } catch (err) {
+        window.__octantFallback(err && err.message ? err.message : 'WebGL is unavailable');
+    }
+
     setupNavigation();
     setupShop();
 });

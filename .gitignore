@@ -5,3 +5,10 @@
 screenshots/*
 !screenshots/v11-release-front.png
 !screenshots/live-phone-final.png
+
+# The worker's dependencies, not the worker.
+worker/node_modules/
+worker/.wrangler/
+
+# vendor/ is deliberately NOT ignored: three.module.min.js is the whole point of
+# vendoring it. Ignore it and the deployed site loses its watch.

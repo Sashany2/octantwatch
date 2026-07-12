@@ -1,0 +1,17 @@
+name = "octant-order"
+main = "src/index.js"
+# Must not be in the future in UTC, which is where Cloudflare validates it — a
+# date picked from a clock that is already past midnight locally gets rejected.
+compatibility_date = "2026-07-01"
+
+# The workers.dev address is how the page reaches this worker; it stays on.
+workers_dev = true
+
+# Preview URLs would publish an extra public address for every version. Nothing
+# needs them here, and each one is another door into the same intake.
+preview_urls = false
+
+# BOT_TOKEN and CHAT_ID are secrets, not vars. They are set once with
+#   wrangler secret put BOT_TOKEN
+#   wrangler secret put CHAT_ID
+# and are never written to this file, so they never reach git.
