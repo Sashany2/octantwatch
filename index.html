@@ -15,6 +15,47 @@
 <meta property="og:url" content="https://octantwatch.xyz/">
 <meta name="twitter:card" content="summary_large_image">
 
+<!-- One address is the address. Without this, octantwatch.xyz/ and
+     octantwatch.xyz/index.html compete against each other in a search index. -->
+<link rel="canonical" href="https://octantwatch.xyz/">
+
+<!-- Structured data: the organisation and the six references, so a search
+     engine sees a catalogue rather than 371 words of prose. The descriptions
+     say "fictional" here too — structured data that lies is worse than none. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://octantwatch.xyz/#org",
+      "name": "OCTANT",
+      "url": "https://octantwatch.xyz/",
+      "description": "OCTANT is a fictional watch brand — a WebGL design demo. No orders are processed and no payments are taken."
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://octantwatch.xyz/#website",
+      "url": "https://octantwatch.xyz/",
+      "name": "OCTANT — Time, Measured",
+      "publisher": { "@id": "https://octantwatch.xyz/#org" }
+    },
+    {
+      "@type": "ItemList",
+      "name": "The Collection — Six References",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "item": { "@type": "Product", "name": "Meridian 38", "sku": "OCT-01", "image": "https://octantwatch.xyz/screenshots/v11-release-front.png", "description": "Polished steel, black lacquer dial, 38 mm. A fictional watch — part of a design demo.", "brand": { "@id": "https://octantwatch.xyz/#org" }, "offers": { "@type": "Offer", "price": "1050", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://octantwatch.xyz/" } } },
+        { "@type": "ListItem", "position": 2, "item": { "@type": "Product", "name": "Meridian 41", "sku": "OCT-02", "image": "https://octantwatch.xyz/screenshots/v11-release-front.png", "description": "Polished steel, black lacquer dial, 41 mm. A fictional watch — part of a design demo.", "brand": { "@id": "https://octantwatch.xyz/#org" }, "offers": { "@type": "Offer", "price": "1150", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://octantwatch.xyz/" } } },
+        { "@type": "ListItem", "position": 3, "item": { "@type": "Product", "name": "Sector", "sku": "OCT-03", "image": "https://octantwatch.xyz/screenshots/v11-release-front.png", "description": "Brushed steel, sector dial, railroad track. A fictional watch — part of a design demo.", "brand": { "@id": "https://octantwatch.xyz/#org" }, "offers": { "@type": "Offer", "price": "1290", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://octantwatch.xyz/" } } },
+        { "@type": "ListItem", "position": 4, "item": { "@type": "Product", "name": "Nocturne", "sku": "OCT-04", "image": "https://octantwatch.xyz/screenshots/v11-release-front.png", "description": "Blackened steel, matte dial, no date. A fictional watch — part of a design demo.", "brand": { "@id": "https://octantwatch.xyz/#org" }, "offers": { "@type": "Offer", "price": "1380", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://octantwatch.xyz/" } } },
+        { "@type": "ListItem", "position": 5, "item": { "@type": "Product", "name": "Reserve", "sku": "OCT-05", "image": "https://octantwatch.xyz/screenshots/v11-release-front.png", "description": "Steel, power-reserve indicator, 72 h. A fictional watch — part of a design demo.", "brand": { "@id": "https://octantwatch.xyz/#org" }, "offers": { "@type": "Offer", "price": "1440", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://octantwatch.xyz/" } } },
+        { "@type": "ListItem", "position": 6, "item": { "@type": "Product", "name": "Skeleton", "sku": "OCT-06", "image": "https://octantwatch.xyz/screenshots/v11-release-front.png", "description": "Steel, open-worked dial, exhibition caseback. A fictional watch — part of a design demo.", "brand": { "@id": "https://octantwatch.xyz/#org" }, "offers": { "@type": "Offer", "price": "1500", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://octantwatch.xyz/" } } }
+      ]
+    }
+  ]
+}
+</script>
+
 <!-- Turnstile: async defer, so a slow or blocked challenges.cloudflare.com never
      holds up the page. If it fails to load the watch still turns and the site
      still reads; only ordering stops, and the form says why. -->
@@ -28,7 +69,7 @@
     --hline: 70px;      /* y of the horizontal rule under the header */
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
     width: 100%;
@@ -52,10 +93,13 @@ body {
 * { cursor: none !important; }
 ::-webkit-scrollbar { display: none; width: 0; }
 
-/* form fields must stay selectable/typable despite the global user-select:none */
-input, select, textarea {
-    user-select: text;
-    -webkit-user-select: text;
+/* Selection is off only where there is nothing to select: the 3D stage and its
+   decorative overlays. The copy, the prices and the references stay copyable —
+   text a visitor cannot copy is text broken on purpose. */
+#webgl, .cursor-inner, .cursor-outer, .top-scrim, .bottom-scrim,
+.grid-lines, .grid-horizontal-line, .story-dashes {
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 /* Touch devices have no pointer to replace: show the real cursor behaviour and
@@ -317,7 +361,9 @@ input, select, textarea {
     letter-spacing: 1.6px;
     text-transform: uppercase;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.30);
+    /* this is the one line that must be readable — it says no money changes
+       hands. A whispered disclaimer is not a disclaimer. */
+    color: rgba(255, 255, 255, 0.5);
 }
 
 /* ---------- shop overlay ---------- */
@@ -367,7 +413,7 @@ html.no-scroll, body.no-scroll { overflow: hidden; }
 }
 .shop-head .shop-sub {
     font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
-    color: rgba(255,255,255,0.45); font-weight: 500;
+    color: rgba(255,255,255,0.55); font-weight: 500;
     margin-bottom: 8px;
 }
 .shop-close {
@@ -404,9 +450,11 @@ html.no-scroll, body.no-scroll { overflow: hidden; }
 }
 .model-figure svg { width: 100%; height: 100%; display: block; }
 
+/* 0.5, not lower: at 0.35 the reference sat at 3.1:1 against the card and
+   failed WCAG AA (4.5:1) — the first thing an accessibility audit flags. */
 .model-ref {
     font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase;
-    color: rgba(255,255,255,0.35); font-weight: 500;
+    color: rgba(255,255,255,0.5); font-weight: 500;
 }
 .model-name {
     font-family: 'Cormorant Garamond', serif;
@@ -453,7 +501,7 @@ html.no-scroll, body.no-scroll { overflow: hidden; }
 .field { flex: 1; display: flex; flex-direction: column; gap: 8px; }
 .field label {
     font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
-    color: rgba(255,255,255,0.40); font-weight: 500;
+    color: rgba(255,255,255,0.55); font-weight: 500;
 }
 .field input, .field select {
     background: transparent;
@@ -686,7 +734,7 @@ html.no-webgl .static-hero { display: block; }
 .static-hero .static-note {
     margin-top: 28px; text-align: center;
     font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-    color: rgba(255,255,255,0.35);
+    color: rgba(255,255,255,0.5);
 }
 
 /* every slide becomes a section, in order, fully visible */
@@ -727,6 +775,10 @@ html.no-webgl .slide-image-mask {
 }
 html.no-webgl .disclaimer { position: static; text-align: center; padding: 40px 0; }
 </style>
+
+<!-- The custom cursor is drawn by JS. With JS off nothing replaces the pointer,
+     so the pointer must stay. -->
+<noscript><style>* { cursor: auto !important; }</style></noscript>
 </head>
 <body>
 
@@ -738,7 +790,7 @@ html.no-webgl .disclaimer { position: static; text-align: center; padding: 40px 
 
 <div class="cinematic-container">
 
-    <div class="main-header">
+    <header class="main-header">
         <div class="brand">Octant</div>
         <nav class="header-nav">
             <a href="#slide-1" class="nav-link">Time</a>
@@ -752,7 +804,12 @@ html.no-webgl .disclaimer { position: static; text-align: center; padding: 40px 
         <div class="header-actions">
             <a href="#" class="contact-btn" id="buy-now-btn">Buy Now <span class="btn-circle"></span></a>
         </div>
-    </div>
+    </header>
+
+    <!-- The slides are positioned against .cinematic-container, not this <main>,
+         so wrapping them costs nothing visually — and it gives the page the
+         skeleton a screen reader navigates by. -->
+    <main>
 
     <!-- Stands in for the 3D watch when there is no WebGL to draw it with.
          Hidden until html.no-webgl says otherwise. Inline, so it needs neither
@@ -786,7 +843,9 @@ html.no-webgl .disclaimer { position: static; text-align: center; padding: 40px 
     </div>
 
     <div class="slide" id="slide-1">
-        <h2 class="slide-title">Time, <br>Measured</h2>
+        <!-- The one h1. aria-label because the script below splits the visible
+             text into per-letter spans, which a screen reader would spell out. -->
+        <h1 class="slide-title" aria-label="OCTANT — Time, Measured">Time, <br>Measured</h1>
         <div class="desc-row">
             <p class="slide-desc col-1">A watch does not tell you the time. It keeps it — against friction, against gravity, against the slow insistence of entropy. Six hundred hours of assembly, for a movement you will rarely look at.</p>
             <p class="slide-desc col-2">Steel is not a luxury. Steel is a promise: that this object will outlast the hand that winds it, and the one after that. Precision is the only ornament we permit ourselves.</p>
@@ -839,14 +898,18 @@ html.no-webgl .disclaimer { position: static; text-align: center; padding: 40px 
         <a href="#" class="shop-cta js-open-shop">View the Collection <span>→</span></a>
     </div>
 
+    </main>
+
 </div>
 
 <!-- ---------------- shop ---------------- -->
-<div class="shop-overlay" id="shop">
+<!-- A named region, so the overlay's content lives inside a landmark. Not
+     role="dialog": a dialog promises focus trapping, and there is none here. -->
+<div class="shop-overlay" id="shop" role="region" aria-labelledby="shop-title">
     <div class="shop-head">
         <div>
             <div class="shop-sub">The Collection — Six References</div>
-            <h3>Buy Now</h3>
+            <h3 id="shop-title">Buy Now</h3>
         </div>
         <button class="shop-close" id="shop-close" aria-label="Close">✕</button>
     </div>
@@ -915,9 +978,9 @@ html.no-webgl .disclaimer { position: static; text-align: center; padding: 40px 
     </div>
 </div>
 
-<div class="disclaimer">Octant is a fictional brand — a design demo. No orders are processed and no payments are taken.</div>
+<footer class="disclaimer">Octant is a fictional brand — a design demo. No orders are processed and no payments are taken.</footer>
 
-<canvas id="webgl"></canvas>
+<canvas id="webgl" aria-hidden="true"></canvas>
 
 <script type="importmap">
 {
@@ -942,7 +1005,14 @@ window.__octantFallback = function (reason) {
     console.warn('OCTANT: falling back to the static page —', reason);
 };
 window.addEventListener('error', function (e) {
-    if (e.target && e.target.tagName === 'SCRIPT') window.__octantFallback('a script failed to load');
+    var t = e.target;
+    if (!t || t.tagName !== 'SCRIPT') return;
+    /* Only the page's own scripts are load-bearing. An ad-blocker eating the
+       analytics beacon or the captcha must not tear down a working 3D scene —
+       for those the form has its own message, and the 3s watchdog still
+       stands behind everything else. */
+    var src = t.src || '';
+    if (src === '' || src.indexOf(location.origin) === 0) window.__octantFallback('a script failed to load');
 }, true);
 setTimeout(function () { window.__octantFallback('the 3D module did not start within 3s'); }, 3000);
 </script>
@@ -2134,8 +2204,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
 <!-- Cloudflare Web Analytics. Last thing on the page and deferred, so it cannot
      hold up the watch; if the beacon never loads, nothing on the site notices.
-     The token is public by necessity — it ships to every visitor either way. -->
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js"
-        data-cf-beacon='{"token": "6b9b1cfe36ae454ca40e08673cfa895c"}'></script>
+     The token is public by necessity — it ships to every visitor either way.
+     Injected only on the real domain: from localhost or a preview the beacon
+     fails CORS anyway, and a dev machine has no business in the numbers. -->
+<script>
+if (location.hostname === 'octantwatch.xyz') {
+    var cfBeacon = document.createElement('script');
+    cfBeacon.defer = true;
+    cfBeacon.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+    cfBeacon.setAttribute('data-cf-beacon', '{"token": "6b9b1cfe36ae454ca40e08673cfa895c"}');
+    document.body.appendChild(cfBeacon);
+}
+</script>
 </body>
 </html>
