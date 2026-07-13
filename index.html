@@ -2131,5 +2131,11 @@ window.addEventListener('DOMContentLoaded', () => {
     setupShop();
 });
 </script>
+
+<!-- Cloudflare Web Analytics. Last thing on the page and deferred, so it cannot
+     hold up the watch; if the beacon never loads, nothing on the site notices.
+     The token is public by necessity — it ships to every visitor either way. -->
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon='{"token": "6b9b1cfe36ae454ca40e08673cfa895c"}'></script>
 </body>
 </html>
