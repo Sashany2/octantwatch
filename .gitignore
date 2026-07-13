@@ -10,5 +10,10 @@ screenshots/*
 worker/node_modules/
 worker/.wrangler/
 
+# The Cloudflare API token lives here and NOWHERE else — never in git, never in
+# chat, never in a screenshot. A committed token is a worker someone else owns.
+worker/.env
+.env
+
 # vendor/ is deliberately NOT ignored: three.module.min.js is the whole point of
 # vendoring it. Ignore it and the deployed site loses its watch.
