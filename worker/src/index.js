@@ -136,6 +136,9 @@ export default {
         const email = String(body.email || '').trim().slice(0, 120);
         const ref = String(body.ref || '').trim();
         const engraving = String(body.engraving || '').trim().slice(0, 24);
+        // The page re-sends the same id when it retries an attempt whose reply
+        // was lost, so two messages with one ref are one order, not two.
+        const orderId = String(body.orderId || '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 36);
 
         if (!name) return json({ ok: false, error: 'name is required' }, 400, origin);
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ ok: false, error: 'email looks wrong' }, 400, origin);
@@ -153,17 +156,32 @@ export default {
             `<b>Name:</b> ${escapeHtml(name)}`,
             `<b>Email:</b> ${escapeHtml(email)}`,
             engraving ? `<b>Engraving:</b> ${escapeHtml(engraving)}` : null,
+            orderId ? `<b>Ref#:</b> <code>${escapeHtml(orderId.slice(0, 8))}</code>` : null,
         ].filter(Boolean);
 
-        const tg = await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: env.CHAT_ID,
-                text: lines.join('\n'),
-                parse_mode: 'HTML',
-            }),
-        });
+        let tg;
+        try {
+            tg = await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: env.CHAT_ID,
+                    text: lines.join('\n'),
+                    parse_mode: 'HTML',
+                }),
+            });
+        } catch (err) {
+            /* The send died mid-flight: Telegram may or may not have received
+               it. Without this catch the exception would leave as a bare 500
+               with no CORS headers, and the page could only shrug "Failed to
+               fetch". Say what is actually known — nothing. */
+            console.error('telegram unreachable:', err);
+            return json({
+                ok: false,
+                uncertain: true,
+                error: 'the order channel did not answer — the order may or may not have been recorded',
+            }, 502, origin);
+        }
 
         if (!tg.ok) {
             // The visitor must not be told "thank you" for an order that went

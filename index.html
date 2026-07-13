@@ -2055,6 +2055,16 @@ function setupShop() {
     const result   = document.getElementById('order-result');
     const closeBtn = document.getElementById('shop-close');
 
+    /* One id per distinct attempt. If the network eats the worker's reply, this
+       page cannot know whether the order landed — so a retry re-sends the SAME
+       id, the id is printed into the Telegram message, and a duplicate
+       identifies itself. Editing any field starts a new attempt, new id. */
+    let attemptId = null;
+    const newAttemptId = () => (crypto.randomUUID
+        ? crypto.randomUUID()
+        : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10));
+    form.addEventListener('input', () => { attemptId = null; });
+
     MODELS.forEach(m => {
         const card = document.createElement('div');
         card.className = 'model-card';
@@ -2150,27 +2160,44 @@ function setupShop() {
         const submitBtn = form.querySelector('.order-submit');
         submitBtn.disabled = true;
         result.textContent = 'Sending…';
+        if (!attemptId) attemptId = newAttemptId();
 
         try {
             const res = await fetch(ORDER_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, engraving, ref: m.ref, turnstile: token }),
+                body: JSON.stringify({ name, email, engraving, ref: m.ref, turnstile: token, orderId: attemptId }),
             });
             const data = await res.json().catch(() => ({}));
 
-            if (!res.ok || !data.ok) throw new Error(data.error || `server said ${res.status}`);
+            if (!res.ok || !data.ok) {
+                const e = new Error(data.error || `server said ${res.status}`);
+                e.uncertain = !!data.uncertain;
+                throw e;
+            }
 
             result.innerHTML =
                 `Thank you, ${name || 'friend'}. Your order for the <strong>${m.name}</strong> ` +
                 `(${m.ref}, ${money(m.price)}) has been recorded.`;
+            attemptId = null;
             form.reset();
             select.value = m.ref;
         } catch (err) {
-            // The visitor is told the truth: it did not go through, try again.
-            result.innerHTML =
-                `<span class="warn">Your order did not go through — ${err.message}. ` +
-                `Nothing was recorded. Please try again.</span>`;
+            /* Two failures, two truths. A reply that says "no" means nothing was
+               recorded. No reply at all means the order may have landed just
+               before the connection died — claiming "nothing was recorded" there
+               would be a guess dressed up as a fact, and the retry it invites is
+               how orders get double-booked. */
+            if (err instanceof TypeError || err.uncertain) {
+                result.innerHTML =
+                    `<span class="warn">The connection dropped before this page heard back — the order may ` +
+                    `or may not have been recorded. Trying again is safe: a repeat carries the same ` +
+                    `reference (${attemptId.slice(0, 8)}), so a duplicate identifies itself.</span>`;
+            } else {
+                result.innerHTML =
+                    `<span class="warn">Your order did not go through — ${err.message}. ` +
+                    `Nothing was recorded. Please try again.</span>`;
+            }
         } finally {
             submitBtn.disabled = false;
             // A Turnstile token is spent once. Without this, a second order in
