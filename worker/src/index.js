@@ -49,6 +49,50 @@ const json = (body, status, origin) =>
 const escapeHtml = (s) =>
     String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+/**
+ * Ask Cloudflare whether this token is real, was minted for this widget, and has
+ * not been spent already. The secret never leaves the worker.
+ *
+ * If TURNSTILE_SECRET_KEY is not configured, this REFUSES the order rather than
+ * waving it through. A spam gate that fails open is not a gate — and the failure
+ * would be invisible, which is worse than loud.
+ */
+async function verifyTurnstile(token, request, env) {
+    if (!env.TURNSTILE_SECRET_KEY) {
+        console.error('TURNSTILE_SECRET_KEY is not set — run wrangler secret put');
+        return { ok: false, status: 500, error: 'the spam check is not configured' };
+    }
+    if (!token || typeof token !== 'string') {
+        return { ok: false, status: 400, error: 'the spam check did not run — reload the page and try again' };
+    }
+
+    const form = new FormData();
+    form.append('secret', env.TURNSTILE_SECRET_KEY);
+    form.append('response', token);
+    // The visitor's IP, so Cloudflare can weigh where the token was actually used
+    const ip = request.headers.get('CF-Connecting-IP');
+    if (ip) form.append('remoteip', ip);
+
+    let outcome;
+    try {
+        const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            method: 'POST',
+            body: form,
+        });
+        outcome = await res.json();
+    } catch (err) {
+        console.error('siteverify unreachable:', err);
+        return { ok: false, status: 502, error: 'could not run the spam check' };
+    }
+
+    if (!outcome.success) {
+        console.warn('turnstile rejected a token:', JSON.stringify(outcome['error-codes'] || []));
+        return { ok: false, status: 403, error: 'the spam check failed — reload the page and try again' };
+    }
+
+    return { ok: true };
+}
+
 export default {
     async fetch(request, env) {
         const origin = request.headers.get('Origin') || '';
@@ -68,6 +112,21 @@ export default {
             body = await request.json();
         } catch {
             return json({ ok: false, error: 'malformed body' }, 400, origin);
+        }
+
+        /* The Turnstile gate, and it has to be here rather than in the browser.
+           The Origin check above only stops other people's *pages*; it stops
+           nothing that speaks HTTP directly, because a client that is not a
+           browser sets Origin to whatever it likes. curl forges it in one flag —
+           that is exactly how this worker was tested.
+
+           A Turnstile token cannot be forged the same way: it is minted by
+           Cloudflare for a real browser that passed a real challenge, it is
+           bound to this widget, and it is only good once. Verify it server-side
+           and the flood stops at the door. */
+        const turnstile = await verifyTurnstile(body.turnstile, request, env);
+        if (!turnstile.ok) {
+            return json({ ok: false, error: turnstile.error }, turnstile.status, origin);
         }
 
         // Validate here, not in the browser. The browser's validation is a

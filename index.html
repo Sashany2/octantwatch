@@ -14,6 +14,11 @@
 <meta property="og:image" content="https://octantwatch.xyz/screenshots/v11-release-front.png">
 <meta property="og:url" content="https://octantwatch.xyz/">
 <meta name="twitter:card" content="summary_large_image">
+
+<!-- Turnstile: async defer, so a slow or blocked challenges.cloudflare.com never
+     holds up the page. If it fails to load the watch still turns and the site
+     still reads; only ordering stops, and the form says why. -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%23fff' stroke-width='2'/%3E%3Cpath d='M16 16V9M16 16l5 3' stroke='%23fff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Inter:wght@300;400;500;600&display=swap');
@@ -851,7 +856,7 @@ html.no-webgl .disclaimer { position: static; text-align: center; padding: 40px 
     <form class="order-form" id="order-form">
         <h4>Place an order</h4>
         <p class="order-note">Select a reference above, or choose one below.<br>
-        <strong style="color:#c9c9c9;font-weight:500;">This is a design demo of a fictional brand.</strong> Submitting sends nothing, charges nothing, and no watch will arrive.</p>
+        <strong style="color:#c9c9c9;font-weight:500;">This is a design demo of a fictional brand.</strong> Nothing is charged and no watch will arrive — but the order itself is real, and it is delivered.</p>
 
         <div class="field-row">
             <div class="field">
@@ -874,6 +879,18 @@ html.no-webgl .disclaimer { position: static; text-align: center; padding: 40px 
                 <input type="text" id="of-engraving" name="engraving" placeholder="Up to 24 characters" maxlength="24">
             </div>
         </div>
+
+        <!-- Turnstile. In managed mode a real visitor sees nothing and does
+             nothing; the widget mints a token in the background. The token is
+             sent with the order and checked by the worker before anything
+             reaches Telegram, which is the only place a check is worth making —
+             a gate in the browser stops browsers, and browsers were never the
+             problem. -->
+        <div class="cf-turnstile"
+             data-sitekey="0x4AAAAAAD0lTmP3OqrntcYN"
+             data-action="turnstile-spin-v1"
+             data-theme="dark"
+             data-size="flexible"></div>
 
         <button type="submit" class="order-submit">Submit order</button>
         <div class="order-result" id="order-result"></div>
@@ -2047,6 +2064,19 @@ function setupShop() {
             return;
         }
 
+        /* Turnstile drops this hidden field into the form once it has a token.
+           No field means the script never loaded — blocked, offline, or an
+           extension ate it. Say so, rather than sending an order the worker is
+           about to reject for a reason the visitor cannot see. */
+        const tokenField = form.querySelector('[name="cf-turnstile-response"]');
+        const token = tokenField ? tokenField.value : '';
+        if (!token) {
+            result.innerHTML =
+                `<span class="warn">The spam check has not finished — it may be blocked by an extension ` +
+                `or still loading. Reload the page and try again. Nothing was sent.</span>`;
+            return;
+        }
+
         const submitBtn = form.querySelector('.order-submit');
         submitBtn.disabled = true;
         result.textContent = 'Sending…';
@@ -2055,7 +2085,7 @@ function setupShop() {
             const res = await fetch(ORDER_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, engraving, ref: m.ref }),
+                body: JSON.stringify({ name, email, engraving, ref: m.ref, turnstile: token }),
             });
             const data = await res.json().catch(() => ({}));
 
@@ -2073,6 +2103,9 @@ function setupShop() {
                 `Nothing was recorded. Please try again.</span>`;
         } finally {
             submitBtn.disabled = false;
+            // A Turnstile token is spent once. Without this, a second order in
+            // the same session is rejected and the visitor cannot tell why.
+            if (window.turnstile) window.turnstile.reset();
         }
     });
 }
